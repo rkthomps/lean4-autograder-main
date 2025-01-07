@@ -1,0 +1,11 @@
+{"totalScore": 10,
+ "totalMaxScore": 20,
+ "files":
+ [{"totalScore": 0,
+   "totalMaxScore": 10,
+   "tests": [{"score": 0, "name": "foo", "maxScore": 10}],
+   "file": "TestSubmission/Test1.lean"},
+  {"totalScore": 10,
+   "totalMaxScore": 10,
+   "tests": [{"score": 10, "name": "bar", "maxScore": 10}],
+   "file": "TestSubmission/Test2.lean"}]}

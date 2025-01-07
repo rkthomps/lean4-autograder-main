@@ -9,6 +9,8 @@ lean_lib AutograderTests where
 
 lean_lib AutograderLib
 
+lean_lib Checking
+
 @[default_target]
 lean_exe autograder where
   root := `Main

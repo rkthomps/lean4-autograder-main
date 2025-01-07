@@ -1,0 +1,10 @@
+[
+  {
+    "submission": "TestSubmission/Test1.lean",
+    "template": "AutograderTests/Test1.lean"
+  },
+  {
+    "submission": "TestSubmission/Test2.lean",
+    "template": "AutograderTests/Test2.lean"
+  }
+]
