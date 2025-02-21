@@ -257,13 +257,40 @@ def checkDefinition (name subName : Name) (pts : Float) (constInfo subConstInfo 
       let result ← checkExpr sheetExpr subExpr
       pure result
 
+structure CollectAxiomsState where
+  visited : NameSet    := {}
+  axioms  : Array Name := #[]
+
+partial def collectAxioms (sheet submission : Environment) (name : Name) : Array Name :=
+  let (_, state) := (go name).run {}
+  state.axioms
+where
+go (c : Name) : StateM CollectAxiomsState Unit := do
+  let s ← get
+  unless s.visited.contains c do
+    modify fun s => { s with visited := s.visited.insert c }
+    match submission.find? c with
+    | some (ConstantInfo.axiomInfo _)  => modify fun s => { s with axioms := s.axioms.push c }
+    | some (ConstantInfo.defnInfo v)   => goExpr v.type *> goExpr v.value
+    | some (ConstantInfo.thmInfo v)    =>
+      let isAutogradedProof := (autogradedProofAttr.getParam? sheet c).isSome
+      if c != name && isAutogradedProof then
+        pure ()
+      else
+        goExpr v.type *> goExpr v.value
+    | some (ConstantInfo.opaqueInfo v) => goExpr v.type *> goExpr v.value
+    | some (ConstantInfo.quotInfo _)   => pure ()
+    | some (ConstantInfo.ctorInfo v)   => goExpr v.type
+    | some (ConstantInfo.recInfo v)    => goExpr v.type
+    | some (ConstantInfo.inductInfo v) => goExpr v.type *> v.ctors.forM go
+    | none                             => pure ()
+goExpr (e : Expr) := e.getUsedConstants.forM go
+
 def checkProof (name subName : Name) (pts : Float)
   (constInfo subConstInfo : ConstantInfo)
   (sheet submission : Environment) : IO ExerciseResultDebug := do
     -- Gather axioms in submitted declaration
-    let (_, submissionState) :=
-          ((CollectAxioms.collect name).run submission).run {}
-
+    let submissionAxioms := collectAxioms sheet submission subName
 
     let validAxioms :=
       if let some t := validAxiomsAttr.getParam? sheet name then t
@@ -298,7 +325,7 @@ def checkProof (name subName : Name) (pts : Float)
     -- * Submitted declaration must use only legal axioms
 
     else if let some badAx :=
-      findInvalidAxiom submissionState.axioms.toList sheet submission validAxioms
+      findInvalidAxiom submissionAxioms.toList sheet submission validAxioms
     then
       pure { name := subName,
              score := 0.0,
